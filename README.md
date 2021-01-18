@@ -1,4 +1,8 @@
-First COMMIT:
+First COMMIT: >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+
 
 In this exercise you are going to create a MiniPaint project.
 
@@ -15,7 +19,17 @@ so that you can draw fullscreen.
 
 // <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
 
-Second COMMIT:
+
+
+
+
+
+Second COMMIT: >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+
+
 
 Next, you going to create a custom view, MyCanvasView for drawing. In the app.java.com.example.android.minipaint package create a new Kotlin file called MyCanvasView. Make the canvas view class, extend the view class, and pass in the context and go with the suggested imports.
 
@@ -97,4 +111,211 @@ extraCanvas.drawColor(backgroundColor)
 if (::extraBitmap.isInitialized) extraBitmap.recycle()
 
 
-THIRD COMMIT: 
+
+
+
+
+
+
+THIRD COMMIT: >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+
+
+
+
+9.	Exercise: Override onDraw()
+
+	Our drawing work from MyCanvasView happens in onDraw. To start, display the canvas, fill in the screen with a background color that you set in onSizeChanged.
+
+	In MyCanvasView override onDraw and draw the contents of the cached extraBitmap on the canvas associated with the view. That drawBitmap canvas method comes in several versions. In this code you provide the bitmap, the x and y coordinates and pixels for the top left corner, and null for to paint, so you can set that later.
+override fun onDraw(canvas: Canvas) {
+   super.onDraw(canvas)
+canvas.drawBitmap(extraBitmap, 0f, 0f, null)
+}
+
+	Notice that the canvas that is passed to onDraw and used by the system to display the bitmap is different than the one you created in the onSizeChanged method and used to draw on the bitmap. Also note the 2D coordinate system used for drawing on a canvas is in pixels and the origin, 00, is at the top left corner of the canvas.
+
+ Run your app and you should see the whole screen filled with a specified background color.
+
+
+
+
+
+
+
+FOURTH COMMIT: >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+
+
+
+
+Exercise
+In this exercise you are going to set up the Paint for drawing.
+
+1. In MyCanvasView.kt, at the top file level, define a constant for the stroke
+	 width.
+
+private const val STROKE_WIDTH = 12f // has to be float
+
+2. At the class level of MyCanvasView, define a variable drawColor for holding the
+	 color to draw with and initialize it with the colorPaint resource you defined
+	 earlier.
+
+private val drawColor = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
+
+3. At the class level, below, add a variable paint for a Paint object and initialize it as follows.
+
+// Set up the paint with which to draw.
+private val paint = Paint().apply {
+   color = drawColor
+   // Smooths out edges of what is drawn without affecting shape.
+   isAntiAlias = true
+   // Dithering affects how colors with higher-precision than the device are down-sampled.
+   isDither = true
+   style = Paint.Style.STROKE // default: FILL
+   strokeJoin = Paint.Join.ROUND // default: MITER
+   strokeCap = Paint.Cap.ROUND // default: BUTT
+   strokeWidth = STROKE_WIDTH // default: Hairline-width (really thin)
+}
+
+
+
+
+Exercise
+In this exercise you are going to initialize a Path object.
+
+1. In MyCanvasView, add a variable path and initialize it with a Path object to
+	 store the path that is being drawn when following the user's touch on the
+	 screen. Import android.graphics.Path for the Path.
+
+private var path = Path()
+
+
+
+
+Exercise
+In this exercise you are going to use the onTouchEvent() method to respond to
+motion on the display.
+
+1. In MyCanvasView, override the onTouchEvent() method to cache the x and y coordinates
+	 of the passed in event. Then use a when expression to handle motion events for
+	 touching down on the screen, moving on the screen, and releasing touch on the
+	 screen. These are the events of interest for drawing a line on the screen. For each
+	 event type, call a utility method, as shown in the code below. See the
+	 MotionEvent class documentation for a full list of touch events.
+
+override fun onTouchEvent(event: MotionEvent): Boolean {
+   motionTouchEventX = event.x
+   motionTouchEventY = event.y
+
+   when (event.action) {
+       MotionEvent.ACTION_DOWN -> touchStart()
+       MotionEvent.ACTION_MOVE -> touchMove()
+       MotionEvent.ACTION_UP -> touchUp()
+   }
+   return true
+}
+
+2. At the class level, add the missing motionTouchEventX and motionTouchEventY
+	 variables for caching the x and y coordinates of the current touch event
+	 (the MotionEvent coordinates). Initialize them to 0f.
+
+private var motionTouchEventX = 0f
+private var motionTouchEventY = 0f
+
+3. Create stubs for the three functions touchStart(), touchMove(), and touchUp().
+
+private fun touchStart() {}
+
+private fun touchMove() {}
+
+private fun touchUp() {}
+
+4. Your code should build and run, but you won't see any different from the colored background yet.
+
+
+
+
+Exercise
+In this exercise you are going to implement touchStart().
+
+1. At the class level, add variables to cache the latest x and y values. After the
+	 user stops moving and lifts their touch, these are the starting point for the
+	 next path (the next segment of the line to draw).
+
+private var currentX = 0f
+private var currentY = 0f
+
+2. Implement the touchStart() method as follows. Reset the path, move to the x-y
+ 	 coordinates of the touch event (motionTouchEventX and motionTouchEventY) and assign
+ 	 currentX and currentY to that value.
+
+private fun touchStart() {
+   path.reset()
+   path.moveTo(motionTouchEventX, motionTouchEventY)
+   currentX = motionTouchEventX
+   currentY = motionTouchEventY
+}
+
+
+
+
+Exercise
+In this exercise you are going to implement touchMove().
+
+1) At the class level, add a touchTolerance variable and set it to
+	 ViewConfiguration.get(context).scaledTouchSlop.
+
+	 private val touchTolerance = ViewConfiguration.get(context).scaledTouchSlop
+
+2) Define the touchMove() method. Calculate the traveled distance (dx, dy), create
+	 a curve between the two points and store it in path, update the running currentX
+	 and currentY tally, and draw the path. Then call invalidate() to force redrawing
+	 of the screen with the updated path.
+
+private fun touchMove() {
+   val dx = Math.abs(motionTouchEventX - currentX)
+   val dy = Math.abs(motionTouchEventY - currentY)
+   if (dx >= touchTolerance || dy >= touchTolerance) {
+       // QuadTo() adds a quadratic bezier from the last point,
+       // approaching control point (x1,y1), and ending at (x2,y2).
+       path.quadTo(currentX, currentY, (motionTouchEventX + currentX) / 2,
+			  															 (motionTouchEventY + currentY) / 2)
+       currentX = motionTouchEventX
+       currentY = motionTouchEventY
+       // Draw the path in the extra bitmap to cache it.
+       extraCanvas.drawPath(path, paint)
+   }
+   invalidate()
+}
+
+In more detail, this is what you will be doing in code:
+
+1) Calculate the distance that has been moved (dx, dy).
+2) If the movement was further than the touch tolerance, add a segment to the path.
+3) Set the starting point for the next segment to the endpoint of this segment.
+4) Using quadTo() instead of lineTo() create a smoothly drawn line without corners.
+	 See Bezier Curves.
+5) Call invalidate() to (eventually call onDraw() and) redraw the view.
+
+
+
+
+Exercise
+In this exercise you are going to implement touchUp().
+
+1. Implement the touchUp() method.
+
+private fun touchUp() {
+   // Reset the path so it doesn't get drawn again.
+   path.reset()
+}
+
+2. Run your code and use your finger to draw on the screen. Notice that if you
+ 	 rotate the device, the screen is cleared, because the drawing state is not
+   saved. For this sample app, this is by design, to give the user a simple way
+	 to clear the screen.
